@@ -7,6 +7,10 @@
 #include "math.h"
 #include "AccelerateMotor.h"
 #include "MovingAverageFilter.h"
+#include "FileStuff.h"
+#include "ProgramConfig.h"
+#include "ssd1306_driver.h"
+#include "hardware/i2c.h"
 /*
     In case of build issues after copying the template, delete the entire build directory and in VSCode:
     Restart VSCode, click on "Terminal" on the top bar, and select GCC 10.2.1 arm-none-eabi
@@ -18,24 +22,6 @@
     - Max X, 2022-01-07
 */
 
-#define PULSE_PIN 18
-#define EN_PIN 16
-#define DIR_PIN 17
-#define BUTTON_PIN 15
-#define BUTTON_ACTIVE_STATE 0 // active LOW
-#define POTENTIOMETER_PIN 26
-
-#define MAX_ACCELERATION 360*5 // degrees/s^2
-#define MAX_DECELERATION (MAX_ACCELERATION * 3)
-#define MAX_SPEED (360 / 2)
-#define UPDATE_RATE_HZ 100 // Hz (for motor)
-#define POTENTIOMETER_UPDATE_RATE 20 // Hz
-#define MOTOR_ANGLE_PER_FULLSTEP (1.8f / 2)
-#define MICROSTEPS 32
-#define ANGLE_PER_STEP (MOTOR_ANGLE_PER_FULLSTEP / MICROSTEPS)
-#define POTENTIOMETER_MOVING_AVERAGE_N (POTENTIOMETER_UPDATE_RATE / 2)
-
-
 AccelerateMotor motor(MAX_ACCELERATION, MAX_DECELERATION, 0, UPDATE_RATE_HZ, ANGLE_PER_STEP, PULSE_PIN);
 MovingAverageFilter moving_average(POTENTIOMETER_MOVING_AVERAGE_N);
 
@@ -43,6 +29,19 @@ void motor_update_task() {
     motor.Update(gpio_get(BUTTON_PIN) == BUTTON_ACTIVE_STATE);
     AddTask(motor_update_task, 1000000 / UPDATE_RATE_HZ);
 }
+
+/*
+    BEHAVIOUR: 
+
+    > UP --> motor goes up
+    > DN --> motor goes down
+    
+    > UP+DN HOLD 3s --> starts recording
+    > UP+DN HOLD 3s --> stops recording
+
+    record: elapsed time, force, delta position, speed
+
+*/
 
 void potentiometer_update_task() {
     adc_select_input(POTENTIOMETER_PIN - 26); // adc channel 0 = pin 26
@@ -69,6 +68,14 @@ void blink_led_task() {
 int main() {
     
     stdio_init_all(); // for printf
+
+    WriteTestFile();
+
+    SSD1306_Driver display(DISPLAY_I2C_INST, DISPLAY_SDA_PIN, DISPLAY_SCL_PIN);
+    display.RenderThaumatichthys();
+    display.DrawText(1, 1, "Max Xiang", 9);
+    display.DrawText(65, 24, "23/08/2025", 10);
+    display.Send();
 
     gpio_init(25);
     gpio_set_dir(25, GPIO_OUT);

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 
 include(pico_sdk_import.cmake)
 
-project(PICO_PROJECT_TEMPLATE C CXX ASM) # Change to the project name (Does not need to match or anything)
+project(Tensile-Strength-Tester C CXX ASM) # Change to the project name (Does not need to match or anything)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
@@ -15,6 +15,9 @@ add_executable(${PROJECT_NAME}
     PWMFunc.cpp
     AccelerateMotor.cpp
     MovingAverageFilter.cpp
+    FileStuff.cpp
+    microsd_hw_config.c
+    ssd1306_driver.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -24,7 +27,11 @@ target_link_libraries(${PROJECT_NAME}
     hardware_pwm
     hardware_adc
     hardware_clocks
+    no-OS-FatFS-SD-SDIO-SPI-RPi-Pico
+    hardware_i2c
 )
+
+add_subdirectory(lib/no-OS-FatFS-SD-SDIO-SPI-RPi-Pico/src build)
 
 pico_enable_stdio_usb(${PROJECT_NAME} 1)
 pico_enable_stdio_uart(${PROJECT_NAME} 0)
