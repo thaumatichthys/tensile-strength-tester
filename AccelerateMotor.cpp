@@ -19,6 +19,10 @@ AccelerateMotor::AccelerateMotor(
     deceleration_ = max_deceleration_degrees_ss;
 }
 
+float AccelerateMotor::GetCurrentSpeed() {
+    return velocity_;
+}
+
 void AccelerateMotor::Update(bool buttonPressed) {
     if (buttonPressed) {
         float increment = acceleration_ * (1.0f / update_rate_);

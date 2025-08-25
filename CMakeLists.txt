@@ -18,6 +18,7 @@ add_executable(${PROJECT_NAME}
     FileStuff.cpp
     microsd_hw_config.c
     ssd1306_driver.cpp
+    ButtonHandler.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

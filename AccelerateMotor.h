@@ -15,6 +15,7 @@ class AccelerateMotor {
     );
     void Update(bool buttonPressed);
     void SetMaxSpeed(float new_val);
+    float GetCurrentSpeed();
     private:
     float velocity_ = 0;
     float max_velocity_;

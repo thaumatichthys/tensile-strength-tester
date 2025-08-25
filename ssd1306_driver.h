@@ -1,7 +1,7 @@
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
 
-#define I2C_SPEED       80000
+#define I2C_SPEED       800000
 
 #define DEVICE_ADDRESS  0x3C
 #define DISPLAY_HEIGHT  32

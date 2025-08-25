@@ -131,15 +131,16 @@ void SSD1306_Driver::DrawRect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, bo
 }
 
 void SSD1306_Driver::DrawText(uint8_t pos_x, uint8_t pos_y, const char* text, uint8_t n) {
-    // 8x5 characters
-    const uint8_t character_spacing = 6; // pixels
-    for (int i = 0; i < n; i++) {
-        for (int x = pos_x + character_spacing * i; x < pos_x + n * character_spacing; x++) {
+    const uint8_t character_spacing = 6; // pixels wide per char
+    for (int i = 0; i < n && text[i] != '\0'; i++) {
+        for (int x = pos_x + character_spacing * i;
+             x < pos_x + character_spacing * (i + 1);
+             x++) {
             for (int y = pos_y; y < pos_y + 8; y++) {
                 uint8_t x_index = (x - pos_x) % character_spacing;
                 bool value = false;
-                if (x_index < 5){
-                    value = (bool) (font[text[i]][x_index] & (1 << (y - pos_y)));
+                if (x_index < 5) {
+                    value = (font[(uint8_t)text[i]][x_index] & (1 << (y - pos_y)));
                 }
                 this->WritePixel(this->display_buffer, x, y, value);
             }

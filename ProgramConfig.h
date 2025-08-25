@@ -5,7 +5,9 @@
 #define PULSE_PIN 2//18
 #define EN_PIN 1//16
 #define DIR_PIN 0//17
-#define BUTTON_PIN 15
+//#define BUTTON_PIN 15
+#define UP_BUTTON_PIN 15
+#define DN_BUTTON_PIN 14
 #define POTENTIOMETER_PIN 26
 
 #define SD_DAT3_CS_PIN 22
@@ -23,6 +25,7 @@
 #define MOTOR_ANGLE_PER_FULLSTEP (1.8f / 2)
 #define MICROSTEPS 32
 #define ANGLE_PER_STEP (MOTOR_ANGLE_PER_FULLSTEP / MICROSTEPS)
+#define MOTOR_UP_DIR_PIN_STATE 1 // this will flip the direction of the motor
 
 // POTENTIOMETER
 #define POTENTIOMETER_UPDATE_RATE 20 // Hz
@@ -35,3 +38,10 @@
 #define DISPLAY_SDA_PIN 2
 #define DISPLAY_SCL_PIN 3
 #define DISPLAY_I2C_INST i2c1
+
+// MISC
+#define RECORD_HOLD_DURATION 500 // ms
+// #define BUTTON_ACTIVE_STATE 0 // active low
+
+// FORCE SENSOR
+#define FORCE_SENSOR_UPDATE_PERIOD 100 // ms

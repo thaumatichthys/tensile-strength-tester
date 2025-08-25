@@ -11,6 +11,7 @@
 #include "ProgramConfig.h"
 #include "ssd1306_driver.h"
 #include "hardware/i2c.h"
+#include "ButtonHandler.h"
 /*
     In case of build issues after copying the template, delete the entire build directory and in VSCode:
     Restart VSCode, click on "Terminal" on the top bar, and select GCC 10.2.1 arm-none-eabi
@@ -24,9 +25,21 @@
 
 AccelerateMotor motor(MAX_ACCELERATION, MAX_DECELERATION, 0, UPDATE_RATE_HZ, ANGLE_PER_STEP, PULSE_PIN);
 MovingAverageFilter moving_average(POTENTIOMETER_MOVING_AVERAGE_N);
+TwoButtonHold hold_buttons(UP_BUTTON_PIN, DN_BUTTON_PIN, RECORD_HOLD_DURATION, BUTTON_ACTIVE_STATE);
+SSD1306_Driver display(DISPLAY_I2C_INST, DISPLAY_SDA_PIN, DISPLAY_SCL_PIN);
 
 void motor_update_task() {
-    motor.Update(gpio_get(BUTTON_PIN) == BUTTON_ACTIVE_STATE);
+    bool up_button = gpio_get(UP_BUTTON_PIN) == BUTTON_ACTIVE_STATE;
+    bool dn_button = gpio_get(DN_BUTTON_PIN) == BUTTON_ACTIVE_STATE;
+    bool held = (up_button != dn_button); // logical XOR
+    
+    if (held) {
+        if (up_button == MOTOR_UP_DIR_PIN_STATE)
+            gpio_put(DIR_PIN, 1);
+        else 
+            gpio_put(DIR_PIN, 0);
+    }
+    motor.Update(held);
     AddTask(motor_update_task, 1000000 / UPDATE_RATE_HZ);
 }
 
@@ -52,7 +65,7 @@ void potentiometer_update_task() {
     int max_val = scale_factor * pot_val * MAX_SPEED / 4095;
     float averaged = (float)moving_average.PushValue(max_val) / scale_factor;
     motor.SetMaxSpeed(averaged);
-    printf("averaged = %f\n", averaged);
+    //printf("averaged = %f\n", averaged);
 
     AddTask(potentiometer_update_task, 1000000 / POTENTIOMETER_UPDATE_RATE);
 }
@@ -65,25 +78,73 @@ void blink_led_task() {
     AddTask(blink_led_task, 500000);
 }
 
+void update_force_task() {
+    float force = 15233.124142;
+    float delta_position = 123;
+    float speed = motor.GetCurrentSpeed();
+    int elapsed_time = to_ms_since_boot(get_absolute_time()) - GetStartTime();
+    int delta_steps = 123412;
+
+    char temp_buf[32];
+    snprintf(temp_buf, 32, "Fload: %-.3f N", force);
+    //display.DrawText(1, 1, "                                ", 32);
+    display.DrawText(1, 1, temp_buf, 32);
+    display.Send();
+
+    /*
+        float load_cell_force_N_;
+        float delta_position_mm_;
+        float speed_degrees_sec_;
+        int elapsed_time_ms_;
+        int delta_steps_;
+    */
+
+    CSVData data = {
+        force,
+        delta_position,
+        speed,
+        elapsed_time,
+        delta_steps
+    };
+
+    UpdateRecording(data);
+    if (IsError()) {
+
+        display.DrawText(1, 24, "SD error occurred", 17);
+        display.Send();
+    }
+
+
+    AddTask(update_force_task, FORCE_SENSOR_UPDATE_PERIOD * 1000);
+}
+
 int main() {
     
     stdio_init_all(); // for printf
 
-    WriteTestFile();
+    //WriteTestFile();
 
-    SSD1306_Driver display(DISPLAY_I2C_INST, DISPLAY_SDA_PIN, DISPLAY_SCL_PIN);
+    
     display.RenderThaumatichthys();
     display.DrawText(1, 1, "Max Xiang", 9);
     display.DrawText(65, 24, "23/08/2025", 10);
     display.Send();
 
+    sleep_ms(500);
+    display.ClearBuffer();
+    display.Send();
+
+    CSVData dummy;
+
+
     gpio_init(25);
     gpio_set_dir(25, GPIO_OUT);
 
 
-    gpio_init(BUTTON_PIN);
-    gpio_set_dir(BUTTON_PIN, GPIO_IN);
-    gpio_set_pulls(BUTTON_PIN, 1, 0); // set pullup
+    //gpio_init(BUTTON_PIN);
+    //gpio_set_dir(BUTTON_PIN, GPIO_IN);
+    gpio_set_pulls(UP_BUTTON_PIN, 1, 0); // set pullup
+    gpio_set_pulls(DN_BUTTON_PIN, 1, 0); // set pullup
     gpio_init(EN_PIN);
     gpio_set_dir(EN_PIN, GPIO_OUT);
     gpio_init(DIR_PIN);
@@ -103,6 +164,7 @@ int main() {
     AddTask(motor_update_task, 1000000 / UPDATE_RATE_HZ);
     AddTask(potentiometer_update_task, 1000000 / POTENTIOMETER_UPDATE_RATE);
     blink_led_task();
+    update_force_task();
 
 
     while(1) { // rekt noob timeam
@@ -118,5 +180,23 @@ int main() {
         //gpio_put(PULSE_PIN, 0);
         
         //sleep_us(1000000 / UPDATE_RATE_HZ);
+        if (hold_buttons.Update()) {
+            
+            printf("asd buttons preswsed\n");
+            if (IsRecording()) {
+                StopRecording();
+                display.DrawText(1, 24, "Stopped Recording", 17);
+            }
+            else {
+                bool start_status = StartRecording();
+                if (start_status) {
+                    display.DrawText(1, 24, "Started Recording", 17);
+                }
+                else {
+                    display.DrawText(1, 24, "SD Card error", 13);
+                }
+            }
+            display.Send();
+        }
     }
 }
