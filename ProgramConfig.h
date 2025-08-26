@@ -2,8 +2,8 @@
 
 
 // PINS 
-#define PULSE_PIN 2//18
-#define EN_PIN 1//16
+#define PULSE_PIN 1//18
+#define EN_PIN 4//16
 #define DIR_PIN 0//17
 //#define BUTTON_PIN 15
 #define UP_BUTTON_PIN 15

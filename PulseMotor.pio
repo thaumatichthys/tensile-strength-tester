@@ -1,0 +1,60 @@
+.program PulseMotor
+.side_set 1 opt
+
+START:
+    set y 0
+DUMMY_1dhuo37d1i37x:
+    jmp DUMMY_1dhuo37d1i37x ; idle loop
+
+
+
+PULSEUP_START:
+    set pins 0 ; set DIR pin
+PULSEUP_LOOP:
+    ;out pins 1
+    ; increment
+    mov y, ~y side 1
+    jmp y--, DUMMY_138u1fh39faweuni
+DUMMY_138u1fh39faweuni:
+    mov y, ~y
+    ;out pins 0
+    mov isr, y side 0
+    push noblock ; output
+    jmp PULSEUP_LOOP
+
+
+
+PULSEDN_START:
+    set pins 1 ; set DIR pin
+PULSEDN_LOOP:
+    ;out pins 
+    ; decrement 
+    nop side 1
+    jmp y-- DUMMY_qwdeibqiue217
+DUMMY_qwdeibqiue217:
+    nop 
+    ;out pins 0
+    mov isr, y side 1
+    push noblock ; output
+    jmp PULSEDN_LOOP
+
+% c-sdk {
+
+void PulseMotor_program_init(PIO pio, uint sm, uint offset, uint pulse_pin, uint dir_pin, float div) {
+    pio_sm_config c = PulseMotor_program_get_default_config(offset);
+    pio_gpio_init(pio, pulse_pin);
+    pio_gpio_init(pio, dir_pin);
+
+    sm_config_set_set_pins(&c, dir_pin, 1);
+    sm_config_set_sideset_pins(&c, pulse_pin);
+    //sm_config_set_jmp_pin(&c, dir_pin);
+
+    pio_sm_set_consecutive_pindirs(pio, sm, dir_pin, 1, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, pulse_pin, 1, true);
+    
+    sm_config_set_clkdiv(&c, div);
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, false);
+}
+
+%}

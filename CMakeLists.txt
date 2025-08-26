@@ -19,6 +19,7 @@ add_executable(${PROJECT_NAME}
     microsd_hw_config.c
     ssd1306_driver.cpp
     ButtonHandler.cpp
+    PIOPulse.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -30,6 +31,11 @@ target_link_libraries(${PROJECT_NAME}
     hardware_clocks
     no-OS-FatFS-SD-SDIO-SPI-RPi-Pico
     hardware_i2c
+    hardware_pio
+)
+
+pico_generate_pio_header(${PROJECT_NAME}  
+    ${CMAKE_CURRENT_LIST_DIR}/PulseMotor.pio
 )
 
 add_subdirectory(lib/no-OS-FatFS-SD-SDIO-SPI-RPi-Pico/src build)
