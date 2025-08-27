@@ -26,12 +26,13 @@
 //PIOPulse pulse_counter(PULSE_PIN, DIR_PIN, 100);
 AccelerateMotor motor(MAX_ACCELERATION, MAX_DECELERATION, 0, UPDATE_RATE_HZ, ANGLE_PER_STEP, PULSE_PIN, DIR_PIN);
 MovingAverageFilter moving_average(POTENTIOMETER_MOVING_AVERAGE_N);
-TwoButtonHold hold_buttons(UP_BUTTON_PIN, DN_BUTTON_PIN, RECORD_HOLD_DURATION, BUTTON_ACTIVE_STATE);
+TwoButtonHold record_hold(UP_BUTTON_PIN, DN_BUTTON_PIN, RECORD_HOLD_DURATION, BUTTON_ACTIVE_STATE);
+TwoButtonHold tare_hold(UP_BUTTON_PIN, DN_BUTTON_PIN, TARE_HOLD_DURATION, BUTTON_ACTIVE_STATE);
 SSD1306_Driver display(DISPLAY_I2C_INST, DISPLAY_SDA_PIN, DISPLAY_SCL_PIN);
 HX711 hx711(8, 9, HX711_GAIN_128);
+float tare_subtract = 0;
 
-
-#define DISPLAY_HEIGHT_MID 14
+#define DISPLAY_HEIGHT_MID 12
 
 void motor_update_task() {
     bool up_button = gpio_get(UP_BUTTON_PIN) == BUTTON_ACTIVE_STATE;
@@ -96,7 +97,7 @@ void record_led_task() {
 }
 
 void update_force_task() {
-    float force = hx711.GetCompensatedReading();
+    float force = hx711.GetCompensatedReading() - tare_subtract;
     int delta_steps = motor.GetPulses();
     float delta_position = (float) delta_steps * ANGLE_PER_STEP * LEAD_SCREW_MM_PER_REVOLUTION / 360.0f; // do unit analysis and stuff
     float speed = motor.GetCurrentSpeed();
@@ -107,7 +108,7 @@ void update_force_task() {
     }
 
     char temp_buf[32];
-    snprintf(temp_buf, 32, "Force: %.3f kgf", force);
+    snprintf(temp_buf, 32, "Force: %.3f N", force);
     display.DrawText(1, 1, "                                ", 32);
     display.DrawText(1, 1, temp_buf, 32);
     display.Send();
@@ -153,7 +154,8 @@ int main() {
     display.DrawText(65, 24, "23/08/2025", 10);
     display.Send();
 
-    sleep_ms(500);
+    sleep_ms(1000);
+    tare_subtract = hx711.GetCompensatedReading();
     display.ClearBuffer();
     display.Send();
 
@@ -209,9 +211,9 @@ int main() {
         //gpio_put(PULSE_PIN, 0);
         
         //sleep_us(1000000 / UPDATE_RATE_HZ);
-        if (hold_buttons.Update()) {
+        if (record_hold.Update()) {
             
-            printf("asd buttons preswsed\n");
+            display.ClearBuffer();
             if (IsRecording()) {
                 StopRecording();
                 display.DrawText(1, DISPLAY_HEIGHT_MID, "Stopped Recording", 17);
@@ -220,12 +222,19 @@ int main() {
                 bool start_status = StartRecording();
                 if (start_status) {
                     display.DrawText(1, DISPLAY_HEIGHT_MID, "Started Recording", 17);
+                    display.DrawText(1, 24, GetFileName(), 32);
+                    
                 }
                 else {
                     display.DrawText(1, DISPLAY_HEIGHT_MID, "SD Card error", 13);
                 }
             }
             display.Send();
+        }
+        if (tare_hold.Update()) {
+            tare_subtract = hx711.GetCompensatedReading();
+            display.ClearBuffer();
+            display.DrawText(1, DISPLAY_HEIGHT_MID, "> Tare", 6);
         }
     }
 }

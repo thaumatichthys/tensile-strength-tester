@@ -12,7 +12,7 @@ size_t file_num = 0;
 size_t MAX_FILES = 99999;
 const size_t filename_buf_size = 32;
 const char* file_extension = ".csv";
-const char* file_name_body = "force-test-result";
+const char* file_name_body = "force-test";
 
 char filename_buf[filename_buf_size];
 
@@ -28,6 +28,10 @@ bool IsRecording() {
 
 uint32_t GetStartTime() {
     return record_start_time;
+}
+
+const char* GetFileName() {
+    return filename_buf;
 }
 
 void WriteTestFile() {

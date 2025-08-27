@@ -18,4 +18,5 @@ void UpdateRecording(CSVData data);
 void StopRecording();
 bool IsRecording();
 bool IsError();
+const char* GetFileName();
 uint32_t GetStartTime();

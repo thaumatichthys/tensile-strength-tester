@@ -44,10 +44,25 @@
 
 // MISC
 #define RECORD_HOLD_DURATION 500 // ms
+#define TARE_HOLD_DURATION 2000 // ms
 #define RECORD_LED_BLINK_PERIOD 200 // ms
 #define ROUND_ELAPSED_TIME true
 // #define BUTTON_ACTIVE_STATE 0 // active low
 
 // FORCE SENSOR
 #define FORCE_SENSOR_UPDATE_PERIOD 50 // ms
-#define LOAD_CELL_CONSTANT (0.1234f)
+#define ADC_PER_VOLT (8388608.0 / 0.02) // cuz sign extended (also, 20mV full range in ONE direction)
+#define SENSOR_MAX_VOLTS_PER_VOLT 0.002 // this is also max value in ONE direction
+#define SENSOR_MAX_LOAD_KGF 100.0
+#define SENSOR_INPUT_VOLTS 4.68 // ??????????
+#define GRAVITY 9.807
+#define LOAD_CELL_CONSTANT (SENSOR_MAX_LOAD_KGF * GRAVITY / (ADC_PER_VOLT * SENSOR_MAX_VOLTS_PER_VOLT * SENSOR_INPUT_VOLTS))
+
+/*
+    load cell: at 100 kgf, output = 2 mV/V (output/input)
+    ADC: 20mV for 2^24
+    adc_per_volt = 2^24 / (20*10^-3)
+    volts_per_100kg = (2.0 * VREG * 10^-3)
+    ones_per_100 = 100
+    N_per_kgf = 9.807
+*/
