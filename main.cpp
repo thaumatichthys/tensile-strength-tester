@@ -12,7 +12,7 @@
 #include "ssd1306_driver.h"
 #include "hardware/i2c.h"
 #include "ButtonHandler.h"
-#include "PIOPulse.h"
+#include "HX711.h"
 /*
     In case of build issues after copying the template, delete the entire build directory and in VSCode:
     Restart VSCode, click on "Terminal" on the top bar, and select GCC 10.2.1 arm-none-eabi
@@ -28,7 +28,10 @@ AccelerateMotor motor(MAX_ACCELERATION, MAX_DECELERATION, 0, UPDATE_RATE_HZ, ANG
 MovingAverageFilter moving_average(POTENTIOMETER_MOVING_AVERAGE_N);
 TwoButtonHold hold_buttons(UP_BUTTON_PIN, DN_BUTTON_PIN, RECORD_HOLD_DURATION, BUTTON_ACTIVE_STATE);
 SSD1306_Driver display(DISPLAY_I2C_INST, DISPLAY_SDA_PIN, DISPLAY_SCL_PIN);
+HX711 hx711(8, 9, HX711_GAIN_128);
 
+
+#define DISPLAY_HEIGHT_MID 14
 
 void motor_update_task() {
     bool up_button = gpio_get(UP_BUTTON_PIN) == BUTTON_ACTIVE_STATE;
@@ -80,16 +83,32 @@ void blink_led_task() {
     AddTask(blink_led_task, 500000);
 }
 
+void record_led_task() {
+    static bool prev_state = 0;
+    prev_state = !prev_state;
+    if (IsRecording()) {
+        gpio_put(REC_LED_PIN, prev_state);
+    }
+    else {
+        gpio_put(REC_LED_PIN, 0);
+    }
+    AddTask(record_led_task, 1000 * RECORD_LED_BLINK_PERIOD);
+}
+
 void update_force_task() {
-    float force = 15233.124142;
-    float delta_position = 123;
+    float force = hx711.GetCompensatedReading();
+    int delta_steps = motor.GetPulses();
+    float delta_position = (float) delta_steps * ANGLE_PER_STEP * LEAD_SCREW_MM_PER_REVOLUTION / 360.0f; // do unit analysis and stuff
     float speed = motor.GetCurrentSpeed();
     int elapsed_time = to_ms_since_boot(get_absolute_time()) - GetStartTime();
-    int delta_steps = 123412;
+    
+    if (ROUND_ELAPSED_TIME) {
+        elapsed_time = (int)(elapsed_time / FORCE_SENSOR_UPDATE_PERIOD) * FORCE_SENSOR_UPDATE_PERIOD;
+    }
 
     char temp_buf[32];
-    snprintf(temp_buf, 32, "Fload: %-.3f N", force);
-    //display.DrawText(1, 1, "                                ", 32);
+    snprintf(temp_buf, 32, "Force: %.3f kgf", force);
+    display.DrawText(1, 1, "                                ", 32);
     display.DrawText(1, 1, temp_buf, 32);
     display.Send();
 
@@ -112,15 +131,11 @@ void update_force_task() {
     UpdateRecording(data);
     if (IsError()) {
 
-        display.DrawText(1, 24, "SD error occurred", 17);
+        display.DrawText(1, DISPLAY_HEIGHT_MID, "SD error occurred", 17);
         display.Send();
     }
-    int32_t in = motor.GetPulses();
-    printf("\npulses: %d, bits = ", in);
-    
-    for (int i = 0; i < 32; i++) {
-        printf("%d", (bool)(in & (1 << (31 - i))));
-    }
+
+    printf("\npulses: %d, hx711: %f\n", delta_steps,  force);
 
 
     AddTask(update_force_task, FORCE_SENSOR_UPDATE_PERIOD * 1000);
@@ -149,8 +164,8 @@ int main() {
     gpio_set_dir(25, GPIO_OUT);
 
 
-    //gpio_init(BUTTON_PIN);
-    //gpio_set_dir(BUTTON_PIN, GPIO_IN);
+    gpio_init(REC_LED_PIN);
+    gpio_set_dir(REC_LED_PIN, GPIO_OUT);
     gpio_set_pulls(UP_BUTTON_PIN, 1, 0); // set pullup
     gpio_set_pulls(DN_BUTTON_PIN, 1, 0); // set pullup
     gpio_init(EN_PIN);
@@ -173,6 +188,12 @@ int main() {
     AddTask(potentiometer_update_task, 1000000 / POTENTIOMETER_UPDATE_RATE);
     blink_led_task();
     update_force_task();
+    record_led_task();
+
+    
+    gpio_init(7);
+    gpio_set_dir(7, GPIO_OUT);
+    gpio_put(7, 1);
 
 
     while(1) { // rekt noob timeam
@@ -193,15 +214,15 @@ int main() {
             printf("asd buttons preswsed\n");
             if (IsRecording()) {
                 StopRecording();
-                display.DrawText(1, 24, "Stopped Recording", 17);
+                display.DrawText(1, DISPLAY_HEIGHT_MID, "Stopped Recording", 17);
             }
             else {
                 bool start_status = StartRecording();
                 if (start_status) {
-                    display.DrawText(1, 24, "Started Recording", 17);
+                    display.DrawText(1, DISPLAY_HEIGHT_MID, "Started Recording", 17);
                 }
                 else {
-                    display.DrawText(1, 24, "SD Card error", 13);
+                    display.DrawText(1, DISPLAY_HEIGHT_MID, "SD Card error", 13);
                 }
             }
             display.Send();

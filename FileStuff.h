@@ -3,7 +3,7 @@
 #include "ff.h"
 
 
-typedef struct CSVData {
+struct CSVData {
     float load_cell_force_N_;
     float delta_position_mm_;
     float speed_degrees_sec_;

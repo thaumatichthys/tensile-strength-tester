@@ -17,6 +17,8 @@
 #define SD_DAT1_X_PIN 20
 #define SD_DAT2_X_PIN 21
 
+#define REC_LED_PIN 11
+
 // MOTOR 
 #define MAX_ACCELERATION 360*5 // degrees/s^2
 #define MAX_DECELERATION (MAX_ACCELERATION * 3)
@@ -26,6 +28,7 @@
 #define MICROSTEPS 32
 #define ANGLE_PER_STEP (MOTOR_ANGLE_PER_FULLSTEP / MICROSTEPS)
 #define MOTOR_UP_DIR_PIN_STATE 1 // this will flip the direction of the motor
+#define LEAD_SCREW_MM_PER_REVOLUTION 2.3
 
 // POTENTIOMETER
 #define POTENTIOMETER_UPDATE_RATE 20 // Hz
@@ -41,7 +44,10 @@
 
 // MISC
 #define RECORD_HOLD_DURATION 500 // ms
+#define RECORD_LED_BLINK_PERIOD 200 // ms
+#define ROUND_ELAPSED_TIME true
 // #define BUTTON_ACTIVE_STATE 0 // active low
 
 // FORCE SENSOR
-#define FORCE_SENSOR_UPDATE_PERIOD 1 // ms
+#define FORCE_SENSOR_UPDATE_PERIOD 50 // ms
+#define LOAD_CELL_CONSTANT (0.1234f)
