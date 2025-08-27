@@ -35,7 +35,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 pico_generate_pio_header(${PROJECT_NAME}  
-    ${CMAKE_CURRENT_LIST_DIR}/PulseMotor.pio
+    ${CMAKE_CURRENT_LIST_DIR}/PulseCounter.pio
 )
 
 add_subdirectory(lib/no-OS-FatFS-SD-SDIO-SPI-RPi-Pico/src build)

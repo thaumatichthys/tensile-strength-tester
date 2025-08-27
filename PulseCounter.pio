@@ -1,0 +1,61 @@
+.program PulseCounter
+
+INIT:
+    set x, 0
+.wrap_target
+START:
+    ; wait for edge on PULSE pin
+WAIT_FOR_PUL_LOW:
+    ; also push x when waiting
+    in x, 32
+    push noblock 
+    jmp pin WAIT_FOR_PUL_LOW
+    ; pulse is now low
+WAIT_FOR_PUL_HIGH:
+    ; also push x when waiting
+    in x, 32
+    push noblock 
+    jmp pin PUL_EDGE_DETECTED
+    jmp WAIT_FOR_PUL_HIGH
+PUL_EDGE_DETECTED:
+    ; edge detected
+    mov osr, pins ; copy DIR into y
+    out null, 31
+    out y, 1
+    jmp !y DECREMENT_COUNTER
+    ; increment counter here
+    mov x, ~x
+    jmp x-- DUMMY1
+DUMMY1:
+    mov x, ~x
+    jmp POST_INCR
+DECREMENT_COUNTER:
+    ; decrement counter here
+    jmp x-- POST_INCR
+POST_INCR:
+    in x, 32
+    push noblock 
+.wrap
+
+% c-sdk {
+
+void PulseCounter_program_init(PIO pio, uint sm, uint offset, uint pulse_pin, uint dir_pin, float div) {
+    pio_sm_config c = PulseCounter_program_get_default_config(offset);
+    pio_gpio_init(pio, pulse_pin);
+    pio_gpio_init(pio, dir_pin);
+
+    sm_config_set_jmp_pin(&c, pulse_pin);
+    sm_config_set_in_pins(&c, dir_pin); // this is for mov x, pins
+    
+    //sm_config_set_in_shift(&c, false, false, 32);
+    sm_config_set_out_shift(&c, false, false, 32); // this is to get the osr shifting to go in the right direction
+
+    pio_sm_set_consecutive_pindirs(pio, sm, dir_pin, 1, false); // input
+    pio_sm_set_consecutive_pindirs(pio, sm, pulse_pin, 1, false); // input
+    
+    sm_config_set_clkdiv(&c, div);
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+
+%}

@@ -44,7 +44,7 @@ void AccelerateMotor::Update(bool buttonPressed) {
         }
 
         
-        printf("velocity = %f, maxvelocity = %f\n", velocity_, max_velocity_);
+        //printf("velocity = %f, maxvelocity = %f\n", velocity_, max_velocity_);
     }
     else {
         // decrease speed

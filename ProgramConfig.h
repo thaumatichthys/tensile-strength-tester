@@ -44,4 +44,4 @@
 // #define BUTTON_ACTIVE_STATE 0 // active low
 
 // FORCE SENSOR
-#define FORCE_SENSOR_UPDATE_PERIOD 100 // ms
+#define FORCE_SENSOR_UPDATE_PERIOD 1 // ms

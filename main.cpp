@@ -12,6 +12,7 @@
 #include "ssd1306_driver.h"
 #include "hardware/i2c.h"
 #include "ButtonHandler.h"
+#include "PIOPulse.h"
 /*
     In case of build issues after copying the template, delete the entire build directory and in VSCode:
     Restart VSCode, click on "Terminal" on the top bar, and select GCC 10.2.1 arm-none-eabi
@@ -22,11 +23,12 @@
 
     - Max X, 2022-01-07
 */
-
+PIOPulse pulse_counter(PULSE_PIN, DIR_PIN, 100);
 AccelerateMotor motor(MAX_ACCELERATION, MAX_DECELERATION, 0, UPDATE_RATE_HZ, ANGLE_PER_STEP, PULSE_PIN);
 MovingAverageFilter moving_average(POTENTIOMETER_MOVING_AVERAGE_N);
 TwoButtonHold hold_buttons(UP_BUTTON_PIN, DN_BUTTON_PIN, RECORD_HOLD_DURATION, BUTTON_ACTIVE_STATE);
 SSD1306_Driver display(DISPLAY_I2C_INST, DISPLAY_SDA_PIN, DISPLAY_SCL_PIN);
+
 
 void motor_update_task() {
     bool up_button = gpio_get(UP_BUTTON_PIN) == BUTTON_ACTIVE_STATE;
@@ -112,6 +114,12 @@ void update_force_task() {
 
         display.DrawText(1, 24, "SD error occurred", 17);
         display.Send();
+    }
+    int32_t in = pulse_counter.GetPulses();
+    printf("\npulses: %d, bits = ", in);
+    
+    for (int i = 0; i < 32; i++) {
+        printf("%d", (bool)(in & (1 << (31 - i))));
     }
 
 
