@@ -23,8 +23,8 @@
 
     - Max X, 2022-01-07
 */
-PIOPulse pulse_counter(PULSE_PIN, DIR_PIN, 100);
-AccelerateMotor motor(MAX_ACCELERATION, MAX_DECELERATION, 0, UPDATE_RATE_HZ, ANGLE_PER_STEP, PULSE_PIN);
+//PIOPulse pulse_counter(PULSE_PIN, DIR_PIN, 100);
+AccelerateMotor motor(MAX_ACCELERATION, MAX_DECELERATION, 0, UPDATE_RATE_HZ, ANGLE_PER_STEP, PULSE_PIN, DIR_PIN);
 MovingAverageFilter moving_average(POTENTIOMETER_MOVING_AVERAGE_N);
 TwoButtonHold hold_buttons(UP_BUTTON_PIN, DN_BUTTON_PIN, RECORD_HOLD_DURATION, BUTTON_ACTIVE_STATE);
 SSD1306_Driver display(DISPLAY_I2C_INST, DISPLAY_SDA_PIN, DISPLAY_SCL_PIN);
@@ -115,7 +115,7 @@ void update_force_task() {
         display.DrawText(1, 24, "SD error occurred", 17);
         display.Send();
     }
-    int32_t in = pulse_counter.GetPulses();
+    int32_t in = motor.GetPulses();
     printf("\npulses: %d, bits = ", in);
     
     for (int i = 0; i < 32; i++) {

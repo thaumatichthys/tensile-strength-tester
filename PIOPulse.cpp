@@ -15,7 +15,7 @@ PIOPulse::PIOPulse(uint pulse_pin, uint dir_pin, int timeout_ms) {
 }
 int32_t PIOPulse::GetPulses() {
     // first clear the FIFO of the outdated reading
-    //pio_sm_get(pio_, sm_);
+    pio_sm_get(pio_, sm_);
     // then read again
     return pio_sm_get_blocking(pio_, sm_);
 }

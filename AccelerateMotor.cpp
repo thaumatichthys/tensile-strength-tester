@@ -8,8 +8,9 @@ AccelerateMotor::AccelerateMotor(
         float max_speed, 
         float update_rate_hz, 
         float motor_angle_per_step, 
-        uint motor_pin
-    ) : pwm_(motor_pin) {
+        uint motor_pin,
+        uint dir_pin
+    ) : pwm_(motor_pin, dir_pin) {
     
     velocity_ = 0.0f;
     max_velocity_ = max_speed;
@@ -21,6 +22,10 @@ AccelerateMotor::AccelerateMotor(
 
 float AccelerateMotor::GetCurrentSpeed() {
     return velocity_;
+}
+
+int32_t AccelerateMotor::GetPulses() {
+    return pwm_.GetPulses();
 }
 
 void AccelerateMotor::Update(bool buttonPressed) {

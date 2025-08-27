@@ -12,14 +12,15 @@ pico_sdk_init()
 add_executable(${PROJECT_NAME}
     main.cpp
     TaskScheduler.cpp
-    PWMFunc.cpp
+
     AccelerateMotor.cpp
     MovingAverageFilter.cpp
     FileStuff.cpp
     microsd_hw_config.c
     ssd1306_driver.cpp
     ButtonHandler.cpp
-    PIOPulse.cpp
+
+    TrackedPWM.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
